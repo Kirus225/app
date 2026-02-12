@@ -1,12 +1,18 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-ps-bg: #323232;
+  --color-ps-panel: #3E3E3E;
+  --color-ps-border: #292929;
+  --color-ps-highlight: #2680EB;
+}
 
 body {
   margin: 0;
   padding: 0;
   overflow: hidden;
   background-color: #323232;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 .checkerboard {

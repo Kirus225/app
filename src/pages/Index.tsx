@@ -3,20 +3,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Settings, Play, RotateCcw, X, Info, CheckCircle2, AlertCircle } from "lucide-react";
 
-// --- THEME CONSTANTS ---
-const THEME = {
-  bg: "#323232",
-  panelBg: "#3E3E3E",
-  border: "#292929",
-  borderLight: "#505050",
-  text: "#F5F5F5",
-  textMuted: "#989898",
-  highlight: "#2680EB",
-  highlightHover: "#1266C7",
-  accent: "#2DCE89",
-  inputBg: "#232323",
-};
-
 // --- TYPES ---
 interface Effects {
   stroke: boolean;
@@ -132,7 +118,6 @@ function calculateManhwaLayout(
   return { lines: bestLayout?.lines || [text], blockHeight: bestLayout?.height || lineHeightPx, radius: R };
 }
 
-// --- COMPONENTS ---
 const BalloonPreviewCard = ({ style, text, effects, isSelected, onSelect }: any) => {
   const isCircle = style === 'circle';
   const borderRadius = isCircle ? '50%' : (style === 'rounded' ? '30px' : '4px');
@@ -197,7 +182,6 @@ const BalloonPreviewCard = ({ style, text, effects, isSelected, onSelect }: any)
 };
 
 const Index = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const [lines, setLines] = useState<Record<number, LineData>>(() => {
     const initialState: Record<number, LineData> = {};
     for (let i = 1; i <= 10; i++) {
@@ -206,7 +190,7 @@ const Index = () => {
     return initialState;
   });
 
-  const [activeLineId, setActiveLineId] = useState<number | null>(null);
+  const [activeLineId, setActiveLineId] = useState<number | null>(1);
   const [logs, setLogs] = useState([{ type: 'info', time: new Date().toLocaleTimeString(), msg: "Plugin pronto." }]);
   const logEndRef = useRef<HTMLDivElement>(null);
 
@@ -239,142 +223,127 @@ const Index = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center bg-[#323232] text-[#F5F5F5]">
-      <button 
-        className="bg-[#2680EB] hover:bg-[#1266C7] text-white font-bold py-2 px-6 rounded shadow-lg transition-all"
-        onClick={() => setIsOpen(true)}
-      >
-        Abrir Manhwa Tipo
-      </button>
-
-      {isOpen && (
-        <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 backdrop-blur-sm">
-          <div className="w-[950px] h-[700px] bg-[#3E3E3E] rounded-lg shadow-2xl border border-[#292929] flex flex-col animate-in fade-in zoom-in duration-200">
-            
-            {/* HEADER */}
-            <div className="h-12 border-b border-[#292929] flex items-center justify-between px-4 bg-[#2e2e2e] rounded-t-lg">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-[#2DCE89] shadow-[0_0_6px_#2DCE89]"></div>
-                <div className="w-px h-4 bg-[#555]"></div>
-                <span className="font-bold text-xs tracking-wider uppercase">Manhwa Tipo</span>
-                <span className="text-[10px] text-[#666]">v1.5</span>
-              </div>
-              <button className="text-[#989898] hover:text-white transition-colors" onClick={() => setIsOpen(false)}>
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* BODY */}
-            <div className="flex-1 flex overflow-hidden">
-              {/* LEFT: LIST */}
-              <div className="w-[400px] flex flex-col border-r border-[#292929] bg-[#333]">
-                <div className="p-3 border-b border-[#292929] bg-[#2a2a2a] text-[10px] font-bold uppercase text-[#989898] flex justify-between">
-                  <span>Lista de Diálogos</span>
-                  <span>{Object.values(lines).filter(l => l.text).length}/10</span>
-                </div>
-                <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                  {Object.values(lines).map(line => (
-                    <div 
-                      key={line.id} 
-                      onClick={() => setActiveLineId(line.id)}
-                      className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${activeLineId === line.id ? 'bg-[#2680EB]/15 border border-[#2680EB]' : 'border border-transparent hover:bg-white/5'}`}
-                    >
-                      <span className={`w-5 text-center font-bold text-[11px] ${activeLineId === line.id ? 'text-[#2680EB]' : 'text-[#666]'}`}>{line.id}</span>
-                      <input 
-                        className="flex-1 bg-[#232323] border border-[#505050] text-[#F5F5F5] h-7 px-2 rounded text-xs outline-none focus:border-[#2680EB]"
-                        placeholder="Digite..."
-                        value={line.text}
-                        onChange={(e) => handleInputChange(line.id, e.target.value)}
-                        onFocus={() => setActiveLineId(line.id)}
-                      />
-                      {line.text && <div className="w-1.5 h-1.5 rounded-full bg-[#2DCE89]" />}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* RIGHT: PREVIEW */}
-              <div className="flex-1 flex flex-col bg-[#252525]">
-                <div className="h-[50px] px-4 border-b border-[#292929] bg-[#2a2a2a] flex justify-between items-center">
-                  <span className="text-[11px] font-bold text-[#2680EB] uppercase">
-                    {activeLineId ? `Propriedades: Linha ${activeLineId}` : 'Selecione uma linha'}
-                  </span>
-                  {activeLineId && (
-                    <div className="flex gap-1">
-                      {['stroke', 'shadow', 'glow'].map((eff) => (
-                        <button 
-                          key={eff}
-                          onClick={() => toggleEffect(eff as keyof Effects)}
-                          className={`px-2 h-6 text-[10px] rounded border transition-all ${lines[activeLineId].effects[eff as keyof Effects] ? 'bg-[#3a3a3a] border-[#2680EB] text-[#2680EB]' : 'bg-[#2a2a2a] border-[#444] text-[#aaa]'}`}
-                        >
-                          {eff.charAt(0).toUpperCase() + eff.slice(1)}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-5">
-                  {!activeLineId ? (
-                    <div className="h-full flex flex-col items-center justify-center text-[#555] gap-2">
-                      <Settings size={40} className="opacity-20" />
-                      <span>Selecione uma linha para editar</span>
-                    </div>
-                  ) : (
-                    <div className="animate-in fade-in duration-200">
-                      {(['circle', 'square', 'rounded'] as const).map(style => (
-                        <BalloonPreviewCard 
-                          key={style}
-                          style={style}
-                          text={lines[activeLineId].text}
-                          effects={lines[activeLineId].effects}
-                          isSelected={lines[activeLineId].style === style}
-                          onSelect={() => setLines(prev => ({ ...prev, [activeLineId]: { ...prev[activeLineId], style } }))}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* FOOTER */}
-            <div className="h-[120px] bg-[#202020] border-t border-[#292929] flex flex-col rounded-b-lg">
-              <div className="flex-1 p-2 overflow-y-auto bg-[#1a1a1a] font-mono text-[10px]">
-                {logs.map((log, idx) => (
-                  <div key={idx} className={`mb-1 flex gap-2 ${log.type === 'error' ? 'text-[#ff6b6b]' : (log.type === 'success' ? 'text-[#69db7c]' : 'text-[#ced4da]')}`}>
-                    <span className="text-[#555]">[{log.time}]</span>
-                    <span>{log.msg}</span>
-                  </div>
-                ))}
-                <div ref={logEndRef} />
-              </div>
-              <div className="h-11 flex items-center justify-between px-4 bg-[#2e2e2e] rounded-b-lg">
-                <button 
-                  className="text-[10px] text-[#aaa] hover:text-white flex items-center gap-1"
-                  onClick={() => {
-                    setLines(prev => {
-                      const reset = { ...prev };
-                      Object.keys(reset).forEach(k => reset[Number(k)].text = "");
-                      return reset;
-                    });
-                    addLog("Reset completo.");
-                  }}
-                >
-                  <RotateCcw size={12} /> Resetar Tudo
-                </button>
-                <button 
-                  className="bg-[#2680EB] hover:bg-[#1266C7] text-white text-xs font-bold px-6 h-7 rounded flex items-center gap-2"
-                  onClick={handleApply}
-                >
-                  <Play size={12} /> Aplicar no Photoshop
-                </button>
-              </div>
-            </div>
-
+    <div className="h-screen w-screen bg-[#323232] flex items-center justify-center p-4">
+      <div className="w-full max-w-[1000px] h-full max-h-[750px] bg-[#3E3E3E] rounded-lg shadow-2xl border border-[#292929] flex flex-col overflow-hidden">
+        
+        {/* HEADER */}
+        <div className="h-12 border-b border-[#292929] flex items-center justify-between px-4 bg-[#2e2e2e]">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-[#2DCE89] shadow-[0_0_6px_#2DCE89]"></div>
+            <div className="w-px h-4 bg-[#555]"></div>
+            <span className="font-bold text-xs tracking-wider uppercase text-[#F5F5F5]">Manhwa Tipo</span>
+            <span className="text-[10px] text-[#666]">v1.5</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <Settings size={16} className="text-[#989898] cursor-pointer hover:text-white" />
+            <X size={18} className="text-[#989898] cursor-pointer hover:text-white" />
           </div>
         </div>
-      )}
+
+        {/* BODY */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* LEFT: LIST */}
+          <div className="w-[350px] flex flex-col border-r border-[#292929] bg-[#333]">
+            <div className="p-3 border-b border-[#292929] bg-[#2a2a2a] text-[10px] font-bold uppercase text-[#989898] flex justify-between">
+              <span>Lista de Diálogos</span>
+              <span>{Object.values(lines).filter(l => l.text).length}/10</span>
+            </div>
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+              {Object.values(lines).map(line => (
+                <div 
+                  key={line.id} 
+                  onClick={() => setActiveLineId(line.id)}
+                  className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${activeLineId === line.id ? 'bg-[#2680EB]/15 border border-[#2680EB]' : 'border border-transparent hover:bg-white/5'}`}
+                >
+                  <span className={`w-5 text-center font-bold text-[11px] ${activeLineId === line.id ? 'text-[#2680EB]' : 'text-[#666]'}`}>{line.id}</span>
+                  <input 
+                    className="flex-1 bg-[#232323] border border-[#505050] text-[#F5F5F5] h-7 px-2 rounded text-xs outline-none focus:border-[#2680EB]"
+                    placeholder="Digite o texto..."
+                    value={line.text}
+                    onChange={(e) => handleInputChange(line.id, e.target.value)}
+                    onFocus={() => setActiveLineId(line.id)}
+                  />
+                  {line.text && <div className="w-1.5 h-1.5 rounded-full bg-[#2DCE89]" />}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* RIGHT: PREVIEW */}
+          <div className="flex-1 flex flex-col bg-[#252525]">
+            <div className="h-[50px] px-4 border-b border-[#292929] bg-[#2a2a2a] flex justify-between items-center">
+              <span className="text-[11px] font-bold text-[#2680EB] uppercase">
+                {activeLineId ? `Propriedades: Linha ${activeLineId}` : 'Selecione uma linha'}
+              </span>
+              {activeLineId && (
+                <div className="flex gap-1">
+                  {['stroke', 'shadow', 'glow'].map((eff) => (
+                    <button 
+                      key={eff}
+                      onClick={() => toggleEffect(eff as keyof Effects)}
+                      className={`px-2 h-6 text-[10px] rounded border transition-all ${lines[activeLineId].effects[eff as keyof Effects] ? 'bg-[#3a3a3a] border-[#2680EB] text-[#2680EB]' : 'bg-[#2a2a2a] border-[#444] text-[#aaa]'}`}
+                    >
+                      {eff.charAt(0).toUpperCase() + eff.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5">
+              {activeLineId && (
+                <div className="animate-in fade-in duration-200">
+                  {(['circle', 'square', 'rounded'] as const).map(style => (
+                    <BalloonPreviewCard 
+                      key={style}
+                      style={style}
+                      text={lines[activeLineId].text}
+                      effects={lines[activeLineId].effects}
+                      isSelected={lines[activeLineId].style === style}
+                      onSelect={() => setLines(prev => ({ ...prev, [activeLineId]: { ...prev[activeLineId], style } }))}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* FOOTER */}
+        <div className="h-[140px] bg-[#202020] border-t border-[#292929] flex flex-col">
+          <div className="flex-1 p-2 overflow-y-auto bg-[#1a1a1a] font-mono text-[10px]">
+            {logs.map((log, idx) => (
+              <div key={idx} className={`mb-1 flex gap-2 ${log.type === 'error' ? 'text-[#ff6b6b]' : (log.type === 'success' ? 'text-[#69db7c]' : 'text-[#ced4da]')}`}>
+                <span className="text-[#555]">[{log.time}]</span>
+                <span>{log.msg}</span>
+              </div>
+            ))}
+            <div ref={logEndRef} />
+          </div>
+          <div className="h-12 flex items-center justify-between px-4 bg-[#2e2e2e]">
+            <button 
+              className="text-[10px] text-[#aaa] hover:text-white flex items-center gap-1"
+              onClick={() => {
+                setLines(prev => {
+                  const reset = { ...prev };
+                  Object.keys(reset).forEach(k => reset[Number(k)].text = "");
+                  return reset;
+                });
+                addLog("Reset completo.");
+              }}
+            >
+              <RotateCcw size={12} /> Resetar Tudo
+            </button>
+            <button 
+              className="bg-[#2680EB] hover:bg-[#1266C7] text-white text-xs font-bold px-8 h-8 rounded flex items-center gap-2 shadow-lg transition-all active:scale-95"
+              onClick={handleApply}
+            >
+              <Play size={12} fill="currentColor" /> Aplicar no Photoshop
+            </button>
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 };
