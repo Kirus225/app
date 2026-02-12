@@ -27,86 +27,101 @@ const measureText = (text: string, font: string): number => {
     context.font = font;
     return context.measureText(text).width;
   }
-  return text.length * (parseInt(font) * 0.5);
+  return text.length * (parseInt(font) * 0.55);
 };
 
 /**
- * Calcula a largura disponível em um ponto Y de um círculo de raio R.
+ * Calcula a largura disponível em um ponto Y relativo ao centro (0 = centro).
+ * R_eff é o raio interno (com padding).
  */
-function getWidthAtY(y: number, R: number, pad: number): number {
+function getWidthAtY(y: number, R_eff: number): number {
   const absY = Math.abs(y);
-  if (absY >= R) return 0;
-  // Teorema de Pitágoras: x^2 + y^2 = R^2 => x = sqrt(R^2 - y^2)
-  const halfWidth = Math.sqrt(R * R - absY * absY);
-  return Math.max(0, (halfWidth * 2) - pad);
+  if (absY >= R_eff) return 0;
+  return Math.sqrt(R_eff * R_eff - absY * absY) * 2;
 }
 
-function calculateManhwaLayout(text: string, style: string, fontSize: number, fixedRadius: number) {
+function calculateManhwaLayout(text: string, style: string, fontSize: number, R: number) {
   if (!text.trim()) return { lines: [] };
 
   const words = text.trim().split(/\s+/);
-  const lineHeight = fontSize * 1.05;
+  const scaleFactor = 1.15; // O scaleY aplicado no CSS
+  const effectiveLineHeight = fontSize * 0.95 * scaleFactor; 
   const font = `900 ${fontSize}px "Comic Sans MS", sans-serif`;
   
-  const R = fixedRadius;
-  const isCircle = style === 'circle' || style === 'rounded';
-  const padding = isCircle ? R * 0.25 : 20;
-  
-  let lines: string[] = [];
-  let currentWordIdx = 0;
-  
-  // Calculamos o número de linhas que cabem no diâmetro
-  const maxLines = Math.floor(((R * 2) - padding) / lineHeight);
-  // Centralizamos o bloco de texto verticalmente
-  // Primeiro, simulamos para saber quantas linhas teremos
-  let tempLines: string[] = [];
-  let tempIdx = 0;
-  
-  // Loop de simulação para contagem de linhas
-  for (let i = 0; i < maxLines; i++) {
-    if (tempIdx >= words.length) break;
-    const lineY = (-(maxLines * lineHeight) / 2) + (i * lineHeight) + (lineHeight / 2);
-    const maxWidth = isCircle ? getWidthAtY(lineY, R, padding) : (R * 2) - padding;
+  // Padding interno para evitar que o texto encoste na borda ou fique estreito demais nos polos
+  const padding = style === 'square' ? 20 : R * 0.22;
+  const R_eff = R - padding;
+
+  const isCurved = style === 'circle' || style === 'rounded';
+
+  // Função interna para realizar a quebra de linha dado um ponto de início vertical (startY)
+  const performWrap = (startY: number) => {
+    let lines: string[] = [];
+    let currentWordIdx = 0;
     
-    let line = "";
-    while (tempIdx < words.length) {
-      const word = words[tempIdx];
-      const testLine = line ? line + " " + word : word;
-      if (measureText(testLine, font) <= maxWidth) {
-        line = testLine;
-        tempIdx++;
-      } else break;
+    // Tentamos preencher até 15 linhas (segurança)
+    for (let i = 0; i < 15; i++) {
+      if (currentWordIdx >= words.length) break;
+
+      // y é o centro geométrico da linha atual relativo ao centro do balão
+      const yLineCenter = startY + (i + 0.5) * effectiveLineHeight;
+      
+      // Se o centro da linha já passou do limite inferior do raio efetivo, paramos
+      if (Math.abs(yLineCenter) >= R_eff && isCurved) break;
+
+      const maxWidth = isCurved ? getWidthAtY(yLineCenter, R_eff) : (R * 2) - (padding * 2);
+      
+      // Se a largura for muito pequena (polos), ignoramos essa linha
+      if (isCurved && maxWidth < fontSize * 1.2) {
+        // Se ainda estamos no topo, tentamos a próxima linha descendo o startY
+        if (yLineCenter < 0) continue; 
+        else break; // Se estamos na base, acabou o espaço
+      }
+
+      let line = "";
+      while (currentWordIdx < words.length) {
+        const word = words[currentWordIdx];
+        const testLine = line ? line + " " + word : word;
+        if (measureText(testLine, font) <= maxWidth) {
+          line = testLine;
+          currentWordIdx++;
+        } else break;
+      }
+      
+      if (line) lines.push(line);
+      else if (isCurved) break; // Não coube nem uma palavra, interrompe
     }
-    if (line) tempLines.push(line);
+    return { lines, wordCount: currentWordIdx };
+  };
+
+  // --- PROCESSO ITERATIVO ---
+  // 1. Estimativa inicial: assumimos que o bloco começa centralizado
+  // Chute inicial baseado no número total de palavras
+  let currentLines: string[] = [];
+  let bestLines: string[] = [];
+  let startY = -(words.length * effectiveLineHeight) / 4; 
+
+  // Iteramos para ajustar o startY com base na altura real do bloco gerado
+  for (let iteration = 0; iteration < 3; iteration++) {
+    const result = performWrap(startY);
+    currentLines = result.lines;
+    
+    if (currentLines.length > 0) {
+      const blockHeight = currentLines.length * effectiveLineHeight;
+      // Recalcula startY para que o bloco fique perfeitamente centralizado
+      startY = -blockHeight / 2;
+      bestLines = currentLines;
+    }
+    
+    // Se todas as palavras couberam, podemos parar
+    if (result.wordCount === words.length) break;
   }
 
-  // Agora fazemos o layout real centralizado com base no número de linhas real
-  const actualLineCount = tempLines.length;
-  const startY = -(actualLineCount * lineHeight) / 2;
-  
-  lines = [];
-  currentWordIdx = 0;
-  for (let i = 0; i < actualLineCount; i++) {
-    const lineY = startY + (i * lineHeight) + (lineHeight / 2);
-    const maxWidth = isCircle ? getWidthAtY(lineY, R, padding) : (R * 2) - padding;
-    
-    let line = "";
-    while (currentWordIdx < words.length) {
-      const word = words[currentWordIdx];
-      const testLine = line ? line + " " + word : word;
-      if (measureText(testLine, font) <= maxWidth) {
-        line = testLine;
-        currentWordIdx++;
-      } else break;
-    }
-    if (line) lines.push(line);
-  }
-
-  return { lines };
+  return { lines: bestLines };
 }
 
 const BalloonPreviewCard = ({ style, text, fontSize, effects, isSelected, onSelect }: BalloonPreviewCardProps) => {
-  const FIXED_RADIUS = 110; // Tamanho fixo do balão no preview (220px de diâmetro)
+  const FIXED_RADIUS = 110; 
   const layout = useMemo(() => calculateManhwaLayout(text, style, fontSize, FIXED_RADIUS), [text, style, fontSize]);
   const { lines } = layout;
   
@@ -142,18 +157,21 @@ const BalloonPreviewCard = ({ style, text, fontSize, effects, isSelected, onSele
             position: 'relative',
           }}
         >
-          <div className="flex flex-col items-center justify-center w-full text-center px-2">
+          {/* Container de texto centralizado horizontal e verticalmente */}
+          <div className="flex flex-col items-center justify-center w-full h-full px-1">
             {lines.map((line, idx) => (
               <div key={idx} style={{
                 color: 'black',
                 fontSize: `${fontSize}px`, 
                 fontWeight: 900, 
-                lineHeight: '0.9',
+                lineHeight: '0.95', // Ajustado para compensar o scaleY
                 fontFamily: '"Comic Sans MS", "Chalkboard SE", cursive, sans-serif', 
                 whiteSpace: 'nowrap',
+                textAlign: 'center',
                 WebkitTextStroke: textStroke,
                 textShadow: textShadowValue,
-                transform: 'scaleY(1.15)', // Estilo Manhwa clássico (texto levemente esticado)
+                transform: 'scaleY(1.15)', // Estilo Manhwa
+                transformOrigin: 'center',
               }}>
                 {line}
               </div>
