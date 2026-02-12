@@ -44,7 +44,6 @@ function calculateManhwaLayout(text: string, style: string, fontSize: number, R:
   const effectiveLineHeight = fontSize * 0.92 * scaleFactor; 
   const font = `900 ${fontSize}px "Comic Sans MS", sans-serif`;
   
-  // Padding reduzido para 15% do raio para dar mais espaço
   const padding = style === 'square' ? 15 : R * 0.15;
   const R_eff = R - padding;
   const isCurved = style === 'circle' || style === 'rounded';
@@ -65,7 +64,6 @@ function calculateManhwaLayout(text: string, style: string, fontSize: number, R:
 
       const maxWidth = isCurved ? getWidthAtY(yLineCenter, R_eff) : (R * 2) - (padding * 2);
       
-      // Se a largura for menor que a maior palavra ou muito pequena, pula/para
       if (isCurved && maxWidth < fontSize * 0.8) {
         if (yLineCenter < 0) continue;
         else break;
@@ -87,17 +85,14 @@ function calculateManhwaLayout(text: string, style: string, fontSize: number, R:
     return { lines, wordCount: currentWordIdx };
   };
 
-  // Iteração para encontrar o centro ideal
   let bestResult = { lines: [] as string[], wordCount: 0 };
   
-  // Tenta diferentes pontos de partida para encontrar o que cabe mais palavras
   for (let offset = -R_eff; offset < 0; offset += 5) {
     const result = performWrap(offset);
     if (result.wordCount > bestResult.wordCount) {
       bestResult = result;
     }
     if (result.wordCount === words.length) {
-      // Se coube tudo, centraliza esse bloco específico e faz uma última passada
       const blockHeight = result.lines.length * effectiveLineHeight;
       return performWrap(-blockHeight / 2);
     }
@@ -107,7 +102,7 @@ function calculateManhwaLayout(text: string, style: string, fontSize: number, R:
 }
 
 const BalloonPreviewCard = ({ style, text, fontSize, effects, isSelected, onSelect }: BalloonPreviewCardProps) => {
-  const FIXED_RADIUS = 115; // Aumentado levemente para 230px de diâmetro
+  const FIXED_RADIUS = 115; 
   const layout = useMemo(() => calculateManhwaLayout(text, style, fontSize, FIXED_RADIUS), [text, style, fontSize]);
   const { lines } = layout;
   
@@ -161,9 +156,6 @@ const BalloonPreviewCard = ({ style, text, fontSize, effects, isSelected, onSele
                 {line}
               </div>
             ))}
-            {lines.length === 0 && text && (
-              <span className="text-red-500 text-[9px] font-bold px-4 text-center">TEXTO MUITO GRANDE PARA O BALÃO</span>
-            )}
           </div>
         </div>
       </div>
