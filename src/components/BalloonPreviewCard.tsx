@@ -27,86 +27,77 @@ const measureText = (text: string, font: string): number => {
     context.font = font;
     return context.measureText(text).width;
   }
-  return text.length * 8;
+  return text.length * (parseInt(font) * 0.6);
 };
 
 /**
- * Calcula a largura máxima disponível em uma coordenada Y dentro de um círculo/elipse.
+ * Calcula a largura disponível em um ponto Y de um círculo de raio R.
  */
-function getAvailableWidthAtY(y: number, R: number, style: string, padX: number): number {
-  if (style === 'square') return (R * 2) - (padX * 2);
-  
-  // Para círculo/arredondado, usamos a fórmula da corda: w = 2 * sqrt(R^2 - y^2)
-  // y varia de -R a R
+function getWidthAtY(y: number, R: number, pad: number): number {
   const absY = Math.abs(y);
   if (absY >= R) return 0;
-  
-  const width = 2 * Math.sqrt(R * R - absY * absY);
-  return Math.max(0, width - (padX * 2));
+  // Teorema de Pitágoras: x^2 + y^2 = R^2 => x = sqrt(R^2 - y^2)
+  const halfWidth = Math.sqrt(R * R - absY * absY);
+  return Math.max(0, (halfWidth * 2) - pad);
 }
 
 function calculateManhwaLayout(text: string, style: string, fontSize: number) {
+  if (!text.trim()) return { lines: [], radius: 60 };
+
   const words = text.trim().split(/\s+/);
-  if (!text.trim()) return { lines: [], radius: 80 };
-
-  const lineHeight = fontSize * 1.2;
-  const font = `700 ${fontSize}px "Comic Sans MS", sans-serif`;
+  const lineHeight = fontSize * 1.1;
+  const font = `800 ${fontSize}px "Comic Sans MS", sans-serif`;
   
-  // Estimativa inicial do raio baseada na área do texto
-  const charWidth = fontSize * 0.6;
-  const totalArea = text.length * charWidth * lineHeight;
-  const efficiency = style === 'circle' ? 0.5 : 0.8;
-  let R = Math.max(60, Math.sqrt(totalArea / (Math.PI * efficiency)));
-  
+  // Começamos com um raio mínimo decente
+  let R = 65; 
   let bestLayout: string[] = [];
-  let attempts = 0;
+  let success = false;
 
-  while (attempts < 10) {
-    const padX = style === 'circle' ? R * 0.15 : 15;
-    const padY = style === 'circle' ? R * 0.2 : 15;
-    
-    // Tentamos encaixar as linhas centralizadas verticalmente
+  // Loop para encontrar o raio ideal onde o texto caiba
+  while (!success && R < 300) {
+    const isCircle = style === 'circle' || style === 'rounded';
+    const padding = isCircle ? R * 0.25 : 20;
     let lines: string[] = [];
     let currentWordIdx = 0;
     
-    // Estimamos quantas linhas cabem
-    const maxLines = Math.floor(((R * 2) - (padY * 2)) / lineHeight);
+    // Estimamos o número de linhas que cabem no diâmetro
+    const maxLines = Math.floor(((R * 2) - padding) / lineHeight);
     const startY = -(maxLines * lineHeight) / 2;
 
     for (let i = 0; i < maxLines; i++) {
       if (currentWordIdx >= words.length) break;
-      
-      const lineY = startY + (i * lineHeight) + (lineHeight / 2);
-      const maxWidth = getAvailableWidthAtY(lineY, R, style, padX);
-      
-      if (maxWidth < fontSize * 2) {
-        // Se a linha for muito estreita (topo/base do círculo), pulamos ou tentamos outra
-        continue;
-      }
 
-      let line = words[currentWordIdx];
-      let nextIdx = currentWordIdx + 1;
-      
-      while (nextIdx < words.length) {
-        const testLine = line + " " + words[nextIdx];
+      const lineY = startY + (i * lineHeight) + (lineHeight / 2);
+      const maxWidth = isCircle ? getWidthAtY(lineY, R, padding) : (R * 2) - padding;
+
+      if (maxWidth < fontSize * 1.5) continue; // Linha muito estreita no topo/base
+
+      let line = "";
+      while (currentWordIdx < words.length) {
+        const word = words[currentWordIdx];
+        const testLine = line ? line + " " + word : word;
+        
         if (measureText(testLine, font) <= maxWidth) {
           line = testLine;
-          nextIdx++;
+          currentWordIdx++;
         } else {
+          // Se a palavra sozinha for maior que a largura máxima da linha, 
+          // precisamos aumentar o raio do balão
+          if (!line && measureText(word, font) > maxWidth) {
+            lines = []; // Reset e aumenta R
+            currentWordIdx = words.length + 1; 
+          }
           break;
         }
       }
-      
-      lines.push(line);
-      currentWordIdx = nextIdx;
+      if (line) lines.push(line);
     }
 
-    if (currentWordIdx >= words.length) {
+    if (currentWordIdx === words.length) {
       bestLayout = lines;
-      break;
+      success = true;
     } else {
-      R += 10; // Aumenta o balão se não couber
-      attempts++;
+      R += 5; // Aumenta o balão gradualmente
     }
   }
 
@@ -118,59 +109,56 @@ const BalloonPreviewCard = ({ style, text, fontSize, effects, isSelected, onSele
   const { lines, radius } = layout;
   
   const diameter = radius * 2;
-  const borderRadius = style === 'circle' ? '50%' : (style === 'rounded' ? '40px' : '4px');
+  const borderRadius = style === 'circle' ? '50%' : (style === 'rounded' ? '35%' : '4px');
   
-  const textStroke = effects.stroke ? '1.5px black' : '0px transparent';
+  const textStroke = effects.stroke ? `${fontSize * 0.1}px black` : '0px transparent';
   let textShadows = [];
   if (effects.shadow) textShadows.push('3px 3px 0px rgba(0,0,0,0.2)'); 
-  if (effects.glow) textShadows.push('0 0 8px rgba(38, 128, 235, 0.6)');
+  if (effects.glow) textShadows.push(`0 0 ${fontSize * 0.5}px rgba(38, 128, 235, 0.8)`);
   const textShadowValue = textShadows.length > 0 ? textShadows.join(', ') : 'none';
 
   return (
     <div 
       onClick={onSelect}
-      className={`mb-6 rounded-lg overflow-hidden cursor-pointer transition-all duration-300 ${isSelected ? 'ring-2 ring-[#2680EB] scale-[1.02] shadow-xl' : 'opacity-60 hover:opacity-100 border border-[#444]'} bg-[#2a2a2a]`}
+      className={`mb-6 rounded-lg overflow-hidden cursor-pointer transition-all duration-300 ${isSelected ? 'ring-2 ring-[#2680EB] scale-[1.02] shadow-2xl' : 'opacity-50 hover:opacity-100 border border-[#444]'} bg-[#2a2a2a]`}
     >
-      <div className={`px-3 py-2 flex justify-between items-center text-[10px] font-black tracking-tighter uppercase ${isSelected ? 'bg-[#2680EB] text-white' : 'bg-[#1a1a1a] text-[#666]'}`}>
+      <div className={`px-3 py-2 flex justify-between items-center text-[10px] font-black uppercase ${isSelected ? 'bg-[#2680EB] text-white' : 'bg-[#1a1a1a] text-[#666]'}`}>
         <span>{style === 'rounded' ? 'Arredondado' : (style === 'square' ? 'Quadrado' : 'Círculo')}</span>
-        {isSelected && <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> SELECIONADO</span>}
+        {isSelected && <span className="flex items-center gap-1">ATIVO</span>}
       </div>
 
-      <div className="checkerboard p-10 flex justify-center items-center min-h-[300px]">
+      <div className="checkerboard p-12 flex justify-center items-center min-h-[320px]">
         <div 
-          className="transition-all duration-500 ease-out"
+          className="transition-all duration-300 ease-out flex items-center justify-center overflow-hidden"
           style={{
             width: `${diameter}px`,
             height: `${diameter}px`,
             background: 'white',
-            border: '3px solid black',
+            border: `${Math.max(2, fontSize * 0.15)}px solid black`,
             borderRadius: borderRadius,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.4)',
             position: 'relative',
           }}
         >
-          <div className="flex flex-col items-center justify-center w-full px-2">
+          <div className="flex flex-col items-center justify-center w-full text-center px-1">
             {lines.map((line, idx) => (
               <div key={idx} style={{
                 color: 'black',
                 fontSize: `${fontSize}px`, 
-                fontWeight: 800, 
-                lineHeight: '1.1',
+                fontWeight: 900, 
+                lineHeight: '0.95',
                 fontFamily: '"Comic Sans MS", "Chalkboard SE", cursive, sans-serif', 
-                textAlign: 'center',
                 whiteSpace: 'nowrap',
                 WebkitTextStroke: textStroke,
                 textShadow: textShadowValue,
-                transform: 'scaleY(1.05)', // Leve compressão vertical comum em manhwas
+                transform: 'scaleY(1.1)', // Estilo Manhwa clássico
               }}>
                 {line}
               </div>
             ))}
-            {lines.length === 0 && <span className="text-[#ddd] font-black text-2xl opacity-20 italic">TEXTO</span>}
+            {lines.length === 0 && text && (
+              <span className="text-red-500 text-[10px] font-bold">TEXTO MUITO LONGO</span>
+            )}
           </div>
         </div>
       </div>
