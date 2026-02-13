@@ -17,6 +17,11 @@ interface LineData {
   id: number;
   text: string;
   fontSize: number;
+  fontFamily: string;
+  alignment: 'left' | 'center' | 'right';
+  uppercase: boolean;
+  verticalScale: number;
+  lineHeight: number;
   style: 'circle' | 'square' | 'rounded';
   effects: Effects;
 }
@@ -29,6 +34,11 @@ const Index = () => {
         id: i, 
         text: "", 
         fontSize: 18,
+        fontFamily: '"Comic Sans MS", sans-serif',
+        alignment: 'center',
+        uppercase: true,
+        verticalScale: 1.15,
+        lineHeight: 0.92,
         style: "circle", 
         effects: { stroke: false, shadow: false, glow: false } 
       };
@@ -74,7 +84,7 @@ const Index = () => {
     <div className="h-screen w-screen bg-[#1e1e1e] flex items-center justify-center overflow-hidden">
       <div className="w-full h-full bg-[#3E3E3E] flex flex-col overflow-hidden">
         
-        {/* TOP BAR (Photoshop Style) */}
+        {/* TOP BAR */}
         <div className="h-10 border-b border-[#252525] flex items-center justify-between px-4 bg-[#2e2e2e] shrink-0">
           <div className="flex items-center gap-4">
             <div className="flex gap-1.5">
@@ -100,8 +110,6 @@ const Index = () => {
 
         {/* MAIN WORKSPACE */}
         <div className="flex-1 flex overflow-hidden">
-          
-          {/* LEFT SIDEBAR: DIALOGUES */}
           <DialogueList 
             lines={lines} 
             activeLineId={activeLineId} 
@@ -109,7 +117,6 @@ const Index = () => {
             onInputChange={handleInputChange} 
           />
 
-          {/* CENTER: CANVAS / PREVIEW AREA */}
           <div className="flex-1 flex flex-col bg-[#1a1a1a] relative">
             <div className="absolute top-4 left-4 z-10">
               <span className="bg-[#2a2a2a]/80 backdrop-blur px-3 py-1 rounded text-[9px] font-bold text-[#666] border border-[#444] uppercase tracking-tighter">
@@ -126,6 +133,11 @@ const Index = () => {
                       style={style}
                       text={lines[activeLineId].text}
                       fontSize={lines[activeLineId].fontSize}
+                      fontFamily={lines[activeLineId].fontFamily}
+                      alignment={lines[activeLineId].alignment}
+                      uppercase={lines[activeLineId].uppercase}
+                      verticalScale={lines[activeLineId].verticalScale}
+                      lineHeight={lines[activeLineId].lineHeight}
                       effects={lines[activeLineId].effects}
                       isSelected={lines[activeLineId].style === style}
                       onSelect={() => updateActiveLine({ style })}
@@ -136,17 +148,15 @@ const Index = () => {
             </div>
           </div>
 
-          {/* RIGHT SIDEBAR: PROPERTIES & EFFECTS */}
           <PropertiesSidebar 
             activeLineId={activeLineId}
-            fontSize={activeLineId ? lines[activeLineId].fontSize : 18}
-            effects={activeLineId ? lines[activeLineId].effects : { stroke: false, shadow: false, glow: false }}
-            onFontSizeChange={(val) => updateActiveLine({ fontSize: val })}
+            data={activeLineId ? lines[activeLineId] : null}
+            onUpdate={updateActiveLine}
             onToggleEffect={toggleEffect}
           />
         </div>
 
-        {/* FOOTER / CONSOLE */}
+        {/* FOOTER */}
         <div className="h-[140px] bg-[#151515] border-t border-[#252525] flex flex-col shrink-0">
           <LogConsole logs={logs} />
           <div className="h-12 flex items-center justify-between px-6 bg-[#252525]">

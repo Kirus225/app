@@ -1,20 +1,13 @@
 "use client";
 
 import React from "react";
-import { Type, Layers, Sparkles, Copy, Square, ChevronRight, RotateCcw } from "lucide-react";
-
-interface Effects {
-  stroke: boolean;
-  shadow: boolean;
-  glow: boolean;
-}
+import { Type, Layers, Sparkles, Copy, Square, ChevronRight, RotateCcw, AlignLeft, AlignCenter, AlignRight, CaseUpper, ArrowUpDown, LineHeight } from "lucide-react";
 
 interface PropertiesSidebarProps {
-  fontSize: number;
-  effects: Effects;
-  onFontSizeChange: (val: number) => void;
-  onToggleEffect: (eff: keyof Effects) => void;
   activeLineId: number | null;
+  data: any;
+  onUpdate: (updates: any) => void;
+  onToggleEffect: (eff: any) => void;
 }
 
 const EffectCard = ({ label, active, onClick, icon: Icon, textStyle, previewLabel }: any) => (
@@ -55,8 +48,8 @@ const EffectCard = ({ label, active, onClick, icon: Icon, textStyle, previewLabe
   </div>
 );
 
-const PropertiesSidebar = ({ fontSize, effects, onFontSizeChange, onToggleEffect, activeLineId }: PropertiesSidebarProps) => {
-  if (!activeLineId) return (
+const PropertiesSidebar = ({ activeLineId, data, onUpdate, onToggleEffect }: PropertiesSidebarProps) => {
+  if (!activeLineId || !data) return (
     <div className="w-[300px] bg-[#333] border-l border-[#252525] flex flex-col items-center justify-center p-8 text-center">
       <div className="w-12 h-12 rounded-full bg-[#2a2a2a] flex items-center justify-center mb-4 border border-[#444]">
         <Layers size={20} className="text-[#555]" />
@@ -66,9 +59,15 @@ const PropertiesSidebar = ({ fontSize, effects, onFontSizeChange, onToggleEffect
     </div>
   );
 
+  const fonts = [
+    { name: 'Comic Sans', value: '"Comic Sans MS", sans-serif' },
+    { name: 'Wild Words', value: '"CC Wild Words", sans-serif' },
+    { name: 'Bangers', value: '"Bangers", cursive' },
+    { name: 'Arial Black', value: '"Arial Black", sans-serif' }
+  ];
+
   return (
     <div className="w-[300px] bg-[#333] border-l border-[#252525] flex flex-col overflow-hidden">
-      {/* HEADER */}
       <div className="p-3 border-b border-[#252525] bg-[#2a2a2a] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-5 h-5 bg-[#2680EB] rounded flex items-center justify-center">
@@ -82,42 +81,92 @@ const PropertiesSidebar = ({ fontSize, effects, onFontSizeChange, onToggleEffect
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar">
-        {/* FONT SECTION */}
+        {/* CHARACTER SECTION */}
         <div className="p-5 border-b border-[#252525] space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-[#aaa]">
-              <Type size={14} />
-              <span className="text-[10px] font-black uppercase tracking-tighter">Tipografia</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <input 
-                type="number" 
-                value={fontSize}
-                onChange={(e) => onFontSizeChange(Math.max(8, Math.min(100, parseInt(e.target.value) || 18)))}
-                className="w-12 bg-[#1a1a1a] border border-[#444] text-[#2680EB] text-[11px] font-mono text-center py-0.5 rounded focus:border-[#2680EB] outline-none"
-              />
-              <span className="text-[9px] font-bold text-[#555]">PX</span>
-            </div>
+          <div className="flex items-center gap-2 text-[#aaa]">
+            <Type size={14} />
+            <span className="text-[10px] font-black uppercase tracking-tighter">Caractere</span>
           </div>
 
           <div className="space-y-3">
+            <select 
+              value={data.fontFamily}
+              onChange={(e) => onUpdate({ fontFamily: e.target.value })}
+              className="w-full bg-[#1a1a1a] border border-[#444] text-[#eee] text-[11px] p-2 rounded outline-none focus:border-[#2680EB]"
+            >
+              {fonts.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
+            </select>
+
+            <div className="flex gap-2">
+              <div className="flex-1 space-y-1.5">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[8px] font-bold text-[#666] uppercase">Tamanho</span>
+                  <span className="text-[9px] font-mono text-[#2680EB]">{data.fontSize}px</span>
+                </div>
+                <input 
+                  type="number" value={data.fontSize}
+                  onChange={(e) => onUpdate({ fontSize: parseInt(e.target.value) || 18 })}
+                  className="w-full bg-[#1a1a1a] border border-[#444] text-[#eee] text-[11px] p-1.5 rounded text-center"
+                />
+              </div>
+              <div className="flex-1 space-y-1.5">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[8px] font-bold text-[#666] uppercase">Escala V</span>
+                  <span className="text-[9px] font-mono text-[#2680EB]">{Math.round(data.verticalScale * 100)}%</span>
+                </div>
+                <input 
+                  type="number" value={Math.round(data.verticalScale * 100)}
+                  onChange={(e) => onUpdate({ verticalScale: (parseInt(e.target.value) || 100) / 100 })}
+                  className="w-full bg-[#1a1a1a] border border-[#444] text-[#eee] text-[11px] p-1.5 rounded text-center"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* PARAGRAPH SECTION */}
+        <div className="p-5 border-b border-[#252525] space-y-4">
+          <div className="flex items-center gap-2 text-[#aaa]">
+            <AlignLeft size={14} />
+            <span className="text-[10px] font-black uppercase tracking-tighter">Parágrafo</span>
+          </div>
+
+          <div className="flex gap-1">
+            {[
+              { id: 'left', icon: AlignLeft },
+              { id: 'center', icon: AlignCenter },
+              { id: 'right', icon: AlignRight }
+            ].map(align => (
+              <button 
+                key={align.id}
+                onClick={() => onUpdate({ alignment: align.id })}
+                className={`flex-1 py-2 flex justify-center rounded border transition-colors ${data.alignment === align.id ? 'bg-[#2680EB] border-[#2680EB] text-white' : 'bg-[#2a2a2a] border-[#444] text-[#777] hover:border-[#666]'}`}
+              >
+                <align.icon size={14} />
+              </button>
+            ))}
+            <button 
+              onClick={() => onUpdate({ uppercase: !data.uppercase })}
+              className={`flex-1 py-2 flex justify-center rounded border transition-colors ${data.uppercase ? 'bg-[#2680EB] border-[#2680EB] text-white' : 'bg-[#2a2a2a] border-[#444] text-[#777] hover:border-[#666]'}`}
+            >
+              <CaseUpper size={14} />
+            </button>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-1.5">
+                <ArrowUpDown size={10} className="text-[#666]" />
+                <span className="text-[8px] font-bold text-[#666] uppercase">Entrelinha (Leading)</span>
+              </div>
+              <span className="text-[9px] font-mono text-[#2680EB]">{data.lineHeight.toFixed(2)}</span>
+            </div>
             <input 
-              type="range" min="10" max="60" 
-              value={fontSize}
-              onChange={(e) => onFontSizeChange(parseInt(e.target.value))}
+              type="range" min="0.5" max="2" step="0.05"
+              value={data.lineHeight}
+              onChange={(e) => onUpdate({ lineHeight: parseFloat(e.target.value) })}
               className="w-full h-1 bg-[#1a1a1a] rounded-lg appearance-none cursor-pointer accent-[#2680EB]"
             />
-            <div className="flex justify-between gap-1">
-              {[14, 18, 24, 32, 48].map(size => (
-                <button 
-                  key={size}
-                  onClick={() => onFontSizeChange(size)}
-                  className={`flex-1 py-1 text-[9px] font-bold rounded border transition-colors ${fontSize === size ? 'bg-[#2680EB] border-[#2680EB] text-white' : 'bg-[#2a2a2a] border-[#444] text-[#777] hover:border-[#666]'}`}
-                >
-                  {size}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
 
@@ -136,50 +185,38 @@ const PropertiesSidebar = ({ fontSize, effects, onFontSizeChange, onToggleEffect
           <div className="grid grid-cols-1 gap-3">
             <EffectCard 
               label="Stroke (Contorno)"
-              active={effects.stroke}
+              active={data.effects.stroke}
               onClick={() => onToggleEffect('stroke')}
               icon={Square}
               previewLabel="STROKE"
               textStyle={{ 
-                WebkitTextStroke: effects.stroke ? '1.5px #2680EB' : '0px',
-                color: effects.stroke ? 'transparent' : 'white'
+                WebkitTextStroke: data.effects.stroke ? '1.5px #2680EB' : '0px',
+                color: data.effects.stroke ? 'transparent' : 'white'
               }}
             />
 
             <EffectCard 
               label="Drop Shadow"
-              active={effects.shadow}
+              active={data.effects.shadow}
               onClick={() => onToggleEffect('shadow')}
               icon={Copy}
               previewLabel="SHADOW"
               textStyle={{ 
-                textShadow: effects.shadow ? '4px 4px 0px rgba(38, 128, 235, 0.6)' : 'none' 
+                textShadow: data.effects.shadow ? '4px 4px 0px rgba(38, 128, 235, 0.6)' : 'none' 
               }}
             />
 
             <EffectCard 
               label="Outer Glow"
-              active={effects.glow}
+              active={data.effects.glow}
               onClick={() => onToggleEffect('glow')}
               icon={Sparkles}
               previewLabel="GLOW"
               textStyle={{ 
-                textShadow: effects.glow ? '0 0 10px #2680EB, 0 0 20px #2680EB' : 'none' 
+                textShadow: data.effects.glow ? '0 0 10px #2680EB, 0 0 20px #2680EB' : 'none' 
               }}
             />
           </div>
-        </div>
-      </div>
-
-      {/* FOOTER INFO */}
-      <div className="p-4 bg-[#252525] border-t border-[#1a1a1a]">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 text-[#2680EB]">
-            <ChevronRight size={12} />
-          </div>
-          <p className="text-[9px] text-[#777] leading-relaxed font-medium">
-            Estes estilos serão convertidos em <span className="text-[#aaa]">Layer Styles</span> nativos ao sincronizar com o Photoshop.
-          </p>
         </div>
       </div>
     </div>

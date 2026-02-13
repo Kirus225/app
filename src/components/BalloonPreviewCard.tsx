@@ -6,6 +6,11 @@ interface BalloonPreviewCardProps {
   style: 'circle' | 'square' | 'rounded';
   text: string;
   fontSize: number;
+  fontFamily: string;
+  alignment: 'left' | 'center' | 'right';
+  uppercase: boolean;
+  verticalScale: number;
+  lineHeight: number;
   effects: { stroke: boolean; shadow: boolean; glow: boolean };
   isSelected: boolean;
   onSelect: () => void;
@@ -36,13 +41,12 @@ function getWidthAtY(y: number, R_eff: number): number {
   return Math.sqrt(R_eff * R_eff - absY * absY) * 2;
 }
 
-function calculateManhwaLayout(text: string, style: string, fontSize: number, R: number) {
+function calculateManhwaLayout(text: string, style: string, fontSize: number, fontFamily: string, lineHeight: number, R: number) {
   if (!text.trim()) return { lines: [] };
 
   const words = text.trim().split(/\s+/);
-  const scaleFactor = 1.15;
-  const effectiveLineHeight = fontSize * 0.92 * scaleFactor; 
-  const font = `900 ${fontSize}px "Comic Sans MS", sans-serif`;
+  const effectiveLineHeight = fontSize * lineHeight; 
+  const font = `900 ${fontSize}px ${fontFamily}`;
   
   const padding = style === 'square' ? 15 : R * 0.15;
   const R_eff = R - padding;
@@ -101,11 +105,18 @@ function calculateManhwaLayout(text: string, style: string, fontSize: number, R:
   return { lines: bestResult.lines };
 }
 
-const BalloonPreviewCard = ({ style, text, fontSize, effects, isSelected, onSelect }: BalloonPreviewCardProps) => {
+const BalloonPreviewCard = ({ 
+  style, text, fontSize, fontFamily, alignment, uppercase, verticalScale, lineHeight, effects, isSelected, onSelect 
+}: BalloonPreviewCardProps) => {
   const FIXED_RADIUS = 115; 
-  const layout = useMemo(() => calculateManhwaLayout(text, style, fontSize, FIXED_RADIUS), [text, style, fontSize]);
-  const { lines } = layout;
+  const processedText = uppercase ? text.toUpperCase() : text;
   
+  const layout = useMemo(() => 
+    calculateManhwaLayout(processedText, style, fontSize, fontFamily, lineHeight, FIXED_RADIUS), 
+    [processedText, style, fontSize, fontFamily, lineHeight]
+  );
+  
+  const { lines } = layout;
   const diameter = FIXED_RADIUS * 2;
   const borderRadius = style === 'circle' ? '50%' : (style === 'rounded' ? '35%' : '4px');
   
@@ -138,20 +149,21 @@ const BalloonPreviewCard = ({ style, text, fontSize, effects, isSelected, onSele
             position: 'relative',
           }}
         >
-          <div className="flex flex-col items-center justify-center w-full h-full">
+          <div className={`flex flex-col w-full h-full justify-center ${alignment === 'left' ? 'items-start px-4' : alignment === 'right' ? 'items-end px-4' : 'items-center'}`}>
             {lines.map((line, idx) => (
               <div key={idx} style={{
                 color: 'black',
                 fontSize: `${fontSize}px`, 
                 fontWeight: 900, 
-                lineHeight: '0.92',
-                fontFamily: '"Comic Sans MS", "Chalkboard SE", cursive, sans-serif', 
+                lineHeight: '1',
+                fontFamily: fontFamily, 
                 whiteSpace: 'nowrap',
-                textAlign: 'center',
+                textAlign: alignment,
                 WebkitTextStroke: textStroke,
                 textShadow: textShadowValue,
-                transform: 'scaleY(1.15)',
+                transform: `scaleY(${verticalScale})`,
                 transformOrigin: 'center',
+                marginBottom: `${(lineHeight - 1) * fontSize}px`
               }}>
                 {line}
               </div>
