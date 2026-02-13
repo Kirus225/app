@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Type, Layers, Sparkles, Shadow as ShadowIcon, Square } from "lucide-react";
+import { Type, Layers, Sparkles, Copy, Square } from "lucide-react";
 
 interface Effects {
   stroke: boolean;
@@ -91,7 +91,7 @@ const PropertiesSidebar = ({ fontSize, effects, onFontSizeChange, onToggleEffect
           label="Drop Shadow"
           active={effects.shadow}
           onClick={() => onToggleEffect('shadow')}
-          icon={ShadowIcon}
+          icon={Copy}
           previewStyle={{ boxShadow: effects.shadow ? '3px 3px 0px rgba(0,0,0,0.3)' : 'none' }}
         />
 
