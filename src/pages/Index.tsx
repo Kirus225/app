@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { Settings, Play, RotateCcw, X, Type } from "lucide-react";
+import { Settings, Play, RotateCcw, X, Layout } from "lucide-react";
 import DialogueList from "../components/DialogueList";
 import LogConsole from "../components/LogConsole";
 import BalloonPreviewCard from "../components/BalloonPreviewCard";
+import PropertiesSidebar from "../components/PropertiesSidebar";
 
 interface Effects {
   stroke: boolean;
@@ -27,7 +28,7 @@ const Index = () => {
       initialState[i] = { 
         id: i, 
         text: "", 
-        fontSize: 16,
+        fontSize: 18,
         style: "circle", 
         effects: { stroke: false, shadow: false, glow: false } 
       };
@@ -36,7 +37,7 @@ const Index = () => {
   });
 
   const [activeLineId, setActiveLineId] = useState<number | null>(1);
-  const [logs, setLogs] = useState([{ type: 'info', time: new Date().toLocaleTimeString(), msg: "Plugin pronto para tipografia." }]);
+  const [logs, setLogs] = useState([{ type: 'info', time: new Date().toLocaleTimeString(), msg: "Interface Photoshop carregada." }]);
 
   const addLog = (msg: string, type = 'info') => {
     setLogs(prev => [...prev, { type, time: new Date().toLocaleTimeString(), msg }]);
@@ -65,34 +66,42 @@ const Index = () => {
   const handleApply = () => {
     const activeLines = Object.values(lines).filter(l => l.text.trim().length > 0);
     if(activeLines.length === 0) { addLog("ERRO: Nenhum texto para aplicar.", 'error'); return; }
-    addLog(`Processando ${activeLines.length} balões com ajuste de forma...`, 'info');
-    setTimeout(() => { addLog("Sucesso: Camadas de texto e formas criadas no Photoshop.", 'success'); }, 1000);
+    addLog(`Exportando ${activeLines.length} camadas para o Photoshop...`, 'info');
+    setTimeout(() => { addLog("Sucesso: Tipografia sincronizada com o documento ativo.", 'success'); }, 1000);
   };
 
   return (
-    <div className="h-screen w-screen bg-[#1e1e1e] flex items-center justify-center p-4">
-      <div className="w-full max-w-[1100px] h-full max-h-[800px] bg-[#3E3E3E] rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-[#292929] flex flex-col overflow-hidden">
+    <div className="h-screen w-screen bg-[#1e1e1e] flex items-center justify-center overflow-hidden">
+      <div className="w-full h-full bg-[#3E3E3E] flex flex-col overflow-hidden">
         
-        {/* HEADER */}
-        <div className="h-12 border-b border-[#252525] flex items-center justify-between px-4 bg-[#2e2e2e]">
-          <div className="flex items-center gap-3">
-            <div className="flex gap-1">
+        {/* TOP BAR (Photoshop Style) */}
+        <div className="h-10 border-b border-[#252525] flex items-center justify-between px-4 bg-[#2e2e2e] shrink-0">
+          <div className="flex items-center gap-4">
+            <div className="flex gap-1.5">
               <div className="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
               <div className="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
               <div className="w-3 h-3 rounded-full bg-[#27c93f]"></div>
             </div>
-            <div className="w-px h-4 bg-[#444] mx-1"></div>
-            <span className="font-black text-[11px] tracking-widest uppercase text-[#eee]">Manhwa Tipo</span>
-            <span className="px-1.5 py-0.5 bg-[#2680EB] text-[9px] font-bold rounded text-white">PRO</span>
+            <div className="w-px h-4 bg-[#444]"></div>
+            <div className="flex items-center gap-2">
+              <Layout size={14} className="text-[#2680EB]" />
+              <span className="font-black text-[10px] tracking-widest uppercase text-[#eee]">Manhwa Tipo <span className="text-[#666] ml-1">v2.0</span></span>
+            </div>
           </div>
           <div className="flex items-center gap-4">
-            <Settings size={16} className="text-[#777] cursor-pointer hover:text-white transition-colors" />
-            <X size={18} className="text-[#777] cursor-pointer hover:text-white transition-colors" />
+            <div className="flex items-center gap-1 px-2 py-0.5 bg-[#1a1a1a] rounded border border-[#444]">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#2DCE89] animate-pulse" />
+              <span className="text-[8px] font-bold text-[#999] uppercase">PS Link Active</span>
+            </div>
+            <Settings size={14} className="text-[#777] cursor-pointer hover:text-white transition-colors" />
+            <X size={16} className="text-[#777] cursor-pointer hover:text-white transition-colors" />
           </div>
         </div>
 
-        {/* BODY */}
+        {/* MAIN WORKSPACE */}
         <div className="flex-1 flex overflow-hidden">
+          
+          {/* LEFT SIDEBAR: DIALOGUES */}
           <DialogueList 
             lines={lines} 
             activeLineId={activeLineId} 
@@ -100,45 +109,17 @@ const Index = () => {
             onInputChange={handleInputChange} 
           />
 
-          {/* RIGHT: PREVIEW & CONTROLS */}
-          <div className="flex-1 flex flex-col bg-[#1a1a1a]">
-            <div className="h-[60px] px-6 border-b border-[#252525] bg-[#252525] flex justify-between items-center">
-              <div className="flex items-center gap-4">
-                <span className="text-[10px] font-black text-[#2680EB] uppercase tracking-widest">
-                  {activeLineId ? `Configurações L${activeLineId}` : 'Selecione'}
-                </span>
-                {activeLineId && (
-                  <div className="flex items-center gap-2 bg-[#1a1a1a] px-3 py-1 rounded-full border border-[#333]">
-                    <Type size={12} className="text-[#666]" />
-                    <input 
-                      type="range" min="10" max="40" 
-                      value={lines[activeLineId].fontSize}
-                      onChange={(e) => updateActiveLine({ fontSize: parseInt(e.target.value) })}
-                      className="w-20 h-1 bg-[#333] rounded-lg appearance-none cursor-pointer accent-[#2680EB]"
-                    />
-                    <span className="text-[10px] font-mono text-[#999] w-6">{lines[activeLineId].fontSize}px</span>
-                  </div>
-                )}
-              </div>
-              
-              {activeLineId && (
-                <div className="flex gap-1.5">
-                  {(['stroke', 'shadow', 'glow'] as const).map((eff) => (
-                    <button 
-                      key={eff}
-                      onClick={() => toggleEffect(eff)}
-                      className={`px-3 h-7 text-[9px] font-bold rounded-md border transition-all ${lines[activeLineId].effects[eff] ? 'bg-[#2680EB] border-[#2680EB] text-white shadow-[0_0_10px_rgba(38,128,235,0.4)]' : 'bg-[#2a2a2a] border-[#444] text-[#777] hover:border-[#666]'}`}
-                    >
-                      {eff.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-              )}
+          {/* CENTER: CANVAS / PREVIEW AREA */}
+          <div className="flex-1 flex flex-col bg-[#1a1a1a] relative">
+            <div className="absolute top-4 left-4 z-10">
+              <span className="bg-[#2a2a2a]/80 backdrop-blur px-3 py-1 rounded text-[9px] font-bold text-[#666] border border-[#444] uppercase tracking-tighter">
+                Visualização em Tempo Real
+              </span>
             </div>
-
-            <div className="flex-1 overflow-y-auto p-8 space-y-2">
+            
+            <div className="flex-1 overflow-y-auto p-12 space-y-6 custom-scrollbar">
               {activeLineId && (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="max-w-[500px] mx-auto animate-in fade-in zoom-in-95 duration-300">
                   {(['circle', 'square', 'rounded'] as const).map(style => (
                     <BalloonPreviewCard 
                       key={style}
@@ -154,34 +135,48 @@ const Index = () => {
               )}
             </div>
           </div>
+
+          {/* RIGHT SIDEBAR: PROPERTIES & EFFECTS */}
+          <PropertiesSidebar 
+            activeLineId={activeLineId}
+            fontSize={activeLineId ? lines[activeLineId].fontSize : 18}
+            effects={activeLineId ? lines[activeLineId].effects : { stroke: false, shadow: false, glow: false }}
+            onFontSizeChange={(val) => updateActiveLine({ fontSize: val })}
+            onToggleEffect={toggleEffect}
+          />
         </div>
 
-        {/* FOOTER */}
-        <div className="h-[160px] bg-[#151515] border-t border-[#252525] flex flex-col">
+        {/* FOOTER / CONSOLE */}
+        <div className="h-[140px] bg-[#151515] border-t border-[#252525] flex flex-col shrink-0">
           <LogConsole logs={logs} />
-          <div className="h-14 flex items-center justify-between px-6 bg-[#252525]">
+          <div className="h-12 flex items-center justify-between px-6 bg-[#252525]">
             <button 
-              className="text-[10px] font-bold text-[#555] hover:text-[#ff5f56] flex items-center gap-2 transition-colors group"
+              className="text-[9px] font-black text-[#555] hover:text-[#ff5f56] flex items-center gap-2 transition-colors group"
               onClick={() => {
                 setLines(prev => {
                   const reset = { ...prev };
                   Object.keys(reset).forEach(k => {
                     reset[Number(k)].text = "";
-                    reset[Number(k)].fontSize = 16;
                   });
                   return reset;
                 });
-                addLog("Reset de todos os campos efetuado.");
+                addLog("Campos de texto limpos.");
               }}
             >
-              <RotateCcw size={14} className="group-hover:rotate-[-120deg] transition-transform" /> RESETAR TUDO
+              <RotateCcw size={12} className="group-hover:rotate-[-120deg] transition-transform" /> LIMPAR TEXTOS
             </button>
-            <button 
-              className="bg-[#2680EB] hover:bg-[#1266C7] text-white text-[11px] font-black px-10 h-9 rounded-lg flex items-center gap-3 shadow-[0_4px_15px_rgba(38,128,235,0.3)] transition-all active:scale-95 active:shadow-inner"
-              onClick={handleApply}
-            >
-              <Play size={14} fill="currentColor" /> APLICAR NO PHOTOSHOP
-            </button>
+            
+            <div className="flex items-center gap-4">
+              <div className="text-[9px] text-[#555] font-bold uppercase">
+                {Object.values(lines).filter(l => l.text).length} Balões Prontos
+              </div>
+              <button 
+                className="bg-[#2680EB] hover:bg-[#1266C7] text-white text-[10px] font-black px-8 h-8 rounded flex items-center gap-2 shadow-[0_4px_12px_rgba(38,128,235,0.2)] transition-all active:scale-95"
+                onClick={handleApply}
+              >
+                <Play size={12} fill="currentColor" /> SINCRONIZAR COM PS
+              </button>
+            </div>
           </div>
         </div>
 
