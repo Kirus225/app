@@ -7,9 +7,11 @@ interface BalloonPreviewCardProps {
   text: string;
   fontSize: number;
   fontFamily: string;
-  alignment: 'left' | 'center' | 'right';
+  color: string;
   uppercase: boolean;
   verticalScale: number;
+  letterSpacing: number;
+  skew: number;
   lineHeight: number;
   effects: { stroke: boolean; shadow: boolean; glow: boolean };
   isSelected: boolean;
@@ -26,11 +28,12 @@ const getMeasureContext = () => {
   return cachedCtx;
 };
 
-const measureText = (text: string, font: string): number => {
+const measureText = (text: string, font: string, letterSpacing: number): number => {
   const context = getMeasureContext();
   if (context) {
     context.font = font;
-    return context.measureText(text).width;
+    const baseWidth = context.measureText(text).width;
+    return baseWidth + (text.length * letterSpacing);
   }
   return text.length * (parseInt(font) * 0.5);
 };
@@ -41,7 +44,7 @@ function getWidthAtY(y: number, R_eff: number): number {
   return Math.sqrt(R_eff * R_eff - absY * absY) * 2;
 }
 
-function calculateManhwaLayout(text: string, style: string, fontSize: number, fontFamily: string, lineHeight: number, R: number) {
+function calculateManhwaLayout(text: string, style: string, fontSize: number, fontFamily: string, lineHeight: number, letterSpacing: number, R: number) {
   if (!text.trim()) return { lines: [] };
 
   const words = text.trim().split(/\s+/);
@@ -77,7 +80,7 @@ function calculateManhwaLayout(text: string, style: string, fontSize: number, fo
       while (currentWordIdx < words.length) {
         const word = words[currentWordIdx];
         const testLine = line ? line + " " + word : word;
-        if (measureText(testLine, font) <= maxWidth) {
+        if (measureText(testLine, font, letterSpacing) <= maxWidth) {
           line = testLine;
           currentWordIdx++;
         } else break;
@@ -106,14 +109,14 @@ function calculateManhwaLayout(text: string, style: string, fontSize: number, fo
 }
 
 const BalloonPreviewCard = ({ 
-  style, text, fontSize, fontFamily, alignment, uppercase, verticalScale, lineHeight, effects, isSelected, onSelect 
+  style, text, fontSize, fontFamily, color, uppercase, verticalScale, letterSpacing, skew, lineHeight, effects, isSelected, onSelect 
 }: BalloonPreviewCardProps) => {
   const FIXED_RADIUS = 115; 
   const processedText = uppercase ? text.toUpperCase() : text;
   
   const layout = useMemo(() => 
-    calculateManhwaLayout(processedText, style, fontSize, fontFamily, lineHeight, FIXED_RADIUS), 
-    [processedText, style, fontSize, fontFamily, lineHeight]
+    calculateManhwaLayout(processedText, style, fontSize, fontFamily, lineHeight, letterSpacing, FIXED_RADIUS), 
+    [processedText, style, fontSize, fontFamily, lineHeight, letterSpacing]
   );
   
   const { lines } = layout;
@@ -149,19 +152,20 @@ const BalloonPreviewCard = ({
             position: 'relative',
           }}
         >
-          <div className={`flex flex-col w-full h-full justify-center ${alignment === 'left' ? 'items-start px-4' : alignment === 'right' ? 'items-end px-4' : 'items-center'}`}>
+          <div className="flex flex-col w-full h-full justify-center items-center">
             {lines.map((line, idx) => (
               <div key={idx} style={{
-                color: 'black',
+                color: color,
                 fontSize: `${fontSize}px`, 
                 fontWeight: 900, 
                 lineHeight: '1',
                 fontFamily: fontFamily, 
                 whiteSpace: 'nowrap',
-                textAlign: alignment,
+                textAlign: 'center',
+                letterSpacing: `${letterSpacing}px`,
                 WebkitTextStroke: textStroke,
                 textShadow: textShadowValue,
-                transform: `scaleY(${verticalScale})`,
+                transform: `scaleY(${verticalScale}) skewX(${skew}deg)`,
                 transformOrigin: 'center',
                 marginBottom: `${(lineHeight - 1) * fontSize}px`
               }}>

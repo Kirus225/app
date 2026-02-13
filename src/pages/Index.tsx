@@ -18,9 +18,11 @@ interface LineData {
   text: string;
   fontSize: number;
   fontFamily: string;
-  alignment: 'left' | 'center' | 'right';
+  color: string;
   uppercase: boolean;
   verticalScale: number;
+  letterSpacing: number;
+  skew: number;
   lineHeight: number;
   style: 'circle' | 'square' | 'rounded';
   effects: Effects;
@@ -35,9 +37,11 @@ const Index = () => {
         text: "", 
         fontSize: 18,
         fontFamily: '"Comic Sans MS", sans-serif',
-        alignment: 'center',
+        color: "#000000",
         uppercase: true,
         verticalScale: 1.15,
+        letterSpacing: 0,
+        skew: 0,
         lineHeight: 0.92,
         style: "circle", 
         effects: { stroke: false, shadow: false, glow: false } 
@@ -134,9 +138,11 @@ const Index = () => {
                       text={lines[activeLineId].text}
                       fontSize={lines[activeLineId].fontSize}
                       fontFamily={lines[activeLineId].fontFamily}
-                      alignment={lines[activeLineId].alignment}
+                      color={lines[activeLineId].color}
                       uppercase={lines[activeLineId].uppercase}
                       verticalScale={lines[activeLineId].verticalScale}
+                      letterSpacing={lines[activeLineId].letterSpacing}
+                      skew={lines[activeLineId].skew}
                       lineHeight={lines[activeLineId].lineHeight}
                       effects={lines[activeLineId].effects}
                       isSelected={lines[activeLineId].style === style}

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Type, Layers, Sparkles, Copy, Square, ChevronRight, RotateCcw, AlignLeft, AlignCenter, AlignRight, CaseUpper, ArrowUpDown, LineHeight } from "lucide-react";
+import { Type, Layers, Sparkles, Copy, Square, RotateCcw, CaseUpper, ArrowUpDown, Zap, Palette, Italic } from "lucide-react";
 
 interface PropertiesSidebarProps {
   activeLineId: number | null;
@@ -66,6 +66,15 @@ const PropertiesSidebar = ({ activeLineId, data, onUpdate, onToggleEffect }: Pro
     { name: 'Arial Black', value: '"Arial Black", sans-serif' }
   ];
 
+  const applyPreset = (type: 'shout' | 'thought' | 'narration') => {
+    const presets = {
+      shout: { fontSize: 32, verticalScale: 1.3, skew: -10, uppercase: true, effects: { stroke: true, shadow: true, glow: false }, color: "#ff0000" },
+      thought: { fontSize: 16, verticalScale: 1.0, skew: 0, uppercase: false, effects: { stroke: false, shadow: false, glow: true }, color: "#000000" },
+      narration: { fontSize: 18, verticalScale: 1.1, skew: 0, uppercase: true, effects: { stroke: false, shadow: false, glow: false }, color: "#ffffff" }
+    };
+    onUpdate(presets[type]);
+  };
+
   return (
     <div className="w-[300px] bg-[#333] border-l border-[#252525] flex flex-col overflow-hidden">
       <div className="p-3 border-b border-[#252525] bg-[#2a2a2a] flex items-center justify-between">
@@ -81,6 +90,19 @@ const PropertiesSidebar = ({ activeLineId, data, onUpdate, onToggleEffect }: Pro
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar">
+        {/* PRESETS SECTION */}
+        <div className="p-5 border-b border-[#252525] space-y-3">
+          <div className="flex items-center gap-2 text-[#aaa]">
+            <Zap size={14} className="text-[#ffbd2e]" />
+            <span className="text-[10px] font-black uppercase tracking-tighter">Presets Rápidos</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <button onClick={() => applyPreset('shout')} className="bg-[#2a2a2a] border border-[#444] hover:border-[#ff5f56] text-[8px] font-black py-2 rounded uppercase text-[#aaa] hover:text-white transition-all">Grito</button>
+            <button onClick={() => applyPreset('thought')} className="bg-[#2a2a2a] border border-[#444] hover:border-[#2680EB] text-[8px] font-black py-2 rounded uppercase text-[#aaa] hover:text-white transition-all">Pensar</button>
+            <button onClick={() => applyPreset('narration')} className="bg-[#2a2a2a] border border-[#444] hover:border-[#2DCE89] text-[8px] font-black py-2 rounded uppercase text-[#aaa] hover:text-white transition-all">Narrar</button>
+          </div>
+        </div>
+
         {/* CHARACTER SECTION */}
         <div className="p-5 border-b border-[#252525] space-y-4">
           <div className="flex items-center gap-2 text-[#aaa]">
@@ -89,85 +111,86 @@ const PropertiesSidebar = ({ activeLineId, data, onUpdate, onToggleEffect }: Pro
           </div>
 
           <div className="space-y-3">
-            <select 
-              value={data.fontFamily}
-              onChange={(e) => onUpdate({ fontFamily: e.target.value })}
-              className="w-full bg-[#1a1a1a] border border-[#444] text-[#eee] text-[11px] p-2 rounded outline-none focus:border-[#2680EB]"
-            >
-              {fonts.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
-            </select>
-
             <div className="flex gap-2">
-              <div className="flex-1 space-y-1.5">
-                <div className="flex items-center justify-between px-1">
-                  <span className="text-[8px] font-bold text-[#666] uppercase">Tamanho</span>
-                  <span className="text-[9px] font-mono text-[#2680EB]">{data.fontSize}px</span>
-                </div>
+              <select 
+                value={data.fontFamily}
+                onChange={(e) => onUpdate({ fontFamily: e.target.value })}
+                className="flex-1 bg-[#1a1a1a] border border-[#444] text-[#eee] text-[11px] p-2 rounded outline-none focus:border-[#2680EB]"
+              >
+                {fonts.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
+              </select>
+              <div className="relative w-10 h-9 bg-[#1a1a1a] border border-[#444] rounded overflow-hidden">
+                <input 
+                  type="color" value={data.color}
+                  onChange={(e) => onUpdate({ color: e.target.value })}
+                  className="absolute inset-0 w-full h-full cursor-pointer opacity-0"
+                />
+                <div className="w-full h-full" style={{ backgroundColor: data.color }} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1.5">
+                <span className="text-[8px] font-bold text-[#666] uppercase px-1">Tamanho</span>
                 <input 
                   type="number" value={data.fontSize}
                   onChange={(e) => onUpdate({ fontSize: parseInt(e.target.value) || 18 })}
                   className="w-full bg-[#1a1a1a] border border-[#444] text-[#eee] text-[11px] p-1.5 rounded text-center"
                 />
               </div>
-              <div className="flex-1 space-y-1.5">
-                <div className="flex items-center justify-between px-1">
-                  <span className="text-[8px] font-bold text-[#666] uppercase">Escala V</span>
-                  <span className="text-[9px] font-mono text-[#2680EB]">{Math.round(data.verticalScale * 100)}%</span>
-                </div>
+              <div className="space-y-1.5">
+                <span className="text-[8px] font-bold text-[#666] uppercase px-1">Escala V</span>
                 <input 
                   type="number" value={Math.round(data.verticalScale * 100)}
                   onChange={(e) => onUpdate({ verticalScale: (parseInt(e.target.value) || 100) / 100 })}
                   className="w-full bg-[#1a1a1a] border border-[#444] text-[#eee] text-[11px] p-1.5 rounded text-center"
                 />
               </div>
+              <div className="space-y-1.5">
+                <span className="text-[8px] font-bold text-[#666] uppercase px-1">Tracking</span>
+                <input 
+                  type="number" value={data.letterSpacing}
+                  onChange={(e) => onUpdate({ letterSpacing: parseInt(e.target.value) || 0 })}
+                  className="w-full bg-[#1a1a1a] border border-[#444] text-[#eee] text-[11px] p-1.5 rounded text-center"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <span className="text-[8px] font-bold text-[#666] uppercase px-1">Inclinação</span>
+                <input 
+                  type="number" value={data.skew}
+                  onChange={(e) => onUpdate({ skew: parseInt(e.target.value) || 0 })}
+                  className="w-full bg-[#1a1a1a] border border-[#444] text-[#eee] text-[11px] p-1.5 rounded text-center"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button 
+                onClick={() => onUpdate({ uppercase: !data.uppercase })}
+                className={`flex-1 py-2 flex items-center justify-center gap-2 rounded border transition-colors ${data.uppercase ? 'bg-[#2680EB] border-[#2680EB] text-white' : 'bg-[#2a2a2a] border-[#444] text-[#777] hover:border-[#666]'}`}
+              >
+                <CaseUpper size={14} />
+                <span className="text-[9px] font-bold uppercase">Caixa Alta</span>
+              </button>
             </div>
           </div>
         </div>
 
-        {/* PARAGRAPH SECTION */}
+        {/* SPACING SECTION */}
         <div className="p-5 border-b border-[#252525] space-y-4">
-          <div className="flex items-center gap-2 text-[#aaa]">
-            <AlignLeft size={14} />
-            <span className="text-[10px] font-black uppercase tracking-tighter">Parágrafo</span>
-          </div>
-
-          <div className="flex gap-1">
-            {[
-              { id: 'left', icon: AlignLeft },
-              { id: 'center', icon: AlignCenter },
-              { id: 'right', icon: AlignRight }
-            ].map(align => (
-              <button 
-                key={align.id}
-                onClick={() => onUpdate({ alignment: align.id })}
-                className={`flex-1 py-2 flex justify-center rounded border transition-colors ${data.alignment === align.id ? 'bg-[#2680EB] border-[#2680EB] text-white' : 'bg-[#2a2a2a] border-[#444] text-[#777] hover:border-[#666]'}`}
-              >
-                <align.icon size={14} />
-              </button>
-            ))}
-            <button 
-              onClick={() => onUpdate({ uppercase: !data.uppercase })}
-              className={`flex-1 py-2 flex justify-center rounded border transition-colors ${data.uppercase ? 'bg-[#2680EB] border-[#2680EB] text-white' : 'bg-[#2a2a2a] border-[#444] text-[#777] hover:border-[#666]'}`}
-            >
-              <CaseUpper size={14} />
-            </button>
-          </div>
-
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between px-1">
-              <div className="flex items-center gap-1.5">
-                <ArrowUpDown size={10} className="text-[#666]" />
-                <span className="text-[8px] font-bold text-[#666] uppercase">Entrelinha (Leading)</span>
-              </div>
-              <span className="text-[9px] font-mono text-[#2680EB]">{data.lineHeight.toFixed(2)}</span>
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-1.5 text-[#aaa]">
+              <ArrowUpDown size={14} />
+              <span className="text-[10px] font-black uppercase tracking-tighter">Entrelinha</span>
             </div>
-            <input 
-              type="range" min="0.5" max="2" step="0.05"
-              value={data.lineHeight}
-              onChange={(e) => onUpdate({ lineHeight: parseFloat(e.target.value) })}
-              className="w-full h-1 bg-[#1a1a1a] rounded-lg appearance-none cursor-pointer accent-[#2680EB]"
-            />
+            <span className="text-[9px] font-mono text-[#2680EB]">{data.lineHeight.toFixed(2)}</span>
           </div>
+          <input 
+            type="range" min="0.5" max="2" step="0.05"
+            value={data.lineHeight}
+            onChange={(e) => onUpdate({ lineHeight: parseFloat(e.target.value) })}
+            className="w-full h-1 bg-[#1a1a1a] rounded-lg appearance-none cursor-pointer accent-[#2680EB]"
+          />
         </div>
 
         {/* EFFECTS SECTION */}
