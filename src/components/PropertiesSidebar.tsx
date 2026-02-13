@@ -17,7 +17,7 @@ interface PropertiesSidebarProps {
   activeLineId: number | null;
 }
 
-const EffectCard = ({ label, active, onClick, icon: Icon, previewStyle }: any) => (
+const EffectCard = ({ label, active, onClick, icon: Icon, textStyle, previewLabel }: any) => (
   <div 
     onClick={onClick}
     className={`group relative cursor-pointer p-3 rounded-lg border transition-all duration-200 ${
@@ -40,14 +40,17 @@ const EffectCard = ({ label, active, onClick, icon: Icon, previewStyle }: any) =
       </div>
     </div>
     
-    <div className="relative h-14 bg-[#151515] rounded-md border border-[#222] flex items-center justify-center overflow-hidden group-hover:border-[#444] transition-colors">
-      <div className="absolute inset-0 opacity-10 checkerboard" />
-      <div 
-        className="relative z-10 w-8 h-8 bg-white border-2 border-black flex items-center justify-center text-xs font-black text-black transition-transform group-hover:scale-110"
-        style={previewStyle}
+    <div className="relative h-16 bg-[#111] rounded-md border border-[#222] flex items-center justify-center overflow-hidden group-hover:border-[#444] transition-colors">
+      <div className="absolute inset-0 opacity-5 checkerboard" />
+      <span 
+        className="relative z-10 text-lg font-black transition-transform group-hover:scale-110 select-none"
+        style={{
+          color: 'white',
+          ...textStyle
+        }}
       >
-        Aa
-      </div>
+        {previewLabel || "TEXT"}
+      </span>
     </div>
   </div>
 );
@@ -136,7 +139,11 @@ const PropertiesSidebar = ({ fontSize, effects, onFontSizeChange, onToggleEffect
               active={effects.stroke}
               onClick={() => onToggleEffect('stroke')}
               icon={Square}
-              previewStyle={{ WebkitTextStroke: effects.stroke ? '2px black' : '0px' }}
+              previewLabel="STROKE"
+              textStyle={{ 
+                WebkitTextStroke: effects.stroke ? '1.5px #2680EB' : '0px',
+                color: effects.stroke ? 'transparent' : 'white'
+              }}
             />
 
             <EffectCard 
@@ -144,7 +151,10 @@ const PropertiesSidebar = ({ fontSize, effects, onFontSizeChange, onToggleEffect
               active={effects.shadow}
               onClick={() => onToggleEffect('shadow')}
               icon={Copy}
-              previewStyle={{ boxShadow: effects.shadow ? '4px 4px 0px rgba(0,0,0,0.4)' : 'none' }}
+              previewLabel="SHADOW"
+              textStyle={{ 
+                textShadow: effects.shadow ? '4px 4px 0px rgba(38, 128, 235, 0.6)' : 'none' 
+              }}
             />
 
             <EffectCard 
@@ -152,7 +162,10 @@ const PropertiesSidebar = ({ fontSize, effects, onFontSizeChange, onToggleEffect
               active={effects.glow}
               onClick={() => onToggleEffect('glow')}
               icon={Sparkles}
-              previewStyle={{ textShadow: effects.glow ? '0 0 8px #2680EB' : 'none' }}
+              previewLabel="GLOW"
+              textStyle={{ 
+                textShadow: effects.glow ? '0 0 10px #2680EB, 0 0 20px #2680EB' : 'none' 
+              }}
             />
           </div>
         </div>
