@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { MessageSquare, Trash2 } from "lucide-react";
 
 interface LineData {
   id: number;
@@ -16,27 +17,62 @@ interface DialogueListProps {
 
 const DialogueList = ({ lines, activeLineId, onSelect, onInputChange }: DialogueListProps) => {
   return (
-    <div className="w-[350px] flex flex-col border-r border-[#292929] bg-[#333]">
-      <div className="p-3 border-b border-[#292929] bg-[#2a2a2a] text-[10px] font-bold uppercase text-[#989898] flex justify-between">
-        <span>Lista de Diálogos</span>
-        <span>{Object.values(lines).filter(l => l.text).length}/10</span>
+    <div className="w-[320px] flex flex-col border-r border-[#252525] bg-[#2e2e2e]">
+      <div className="p-3 border-b border-[#252525] bg-[#2a2a2a] flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <MessageSquare size={14} className="text-[#777]" />
+          <span className="text-[10px] font-black uppercase text-[#989898] tracking-widest">Script / Diálogos</span>
+        </div>
+        <div className="px-2 py-0.5 rounded bg-[#1a1a1a] border border-[#444] text-[9px] font-mono text-[#2680EB]">
+          {Object.values(lines).filter(l => l.text.trim()).length}/10
+        </div>
       </div>
-      <div className="flex-1 overflow-y-auto p-2 space-y-1">
+
+      <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
         {Object.values(lines).map(line => (
           <div 
             key={line.id} 
             onClick={() => onSelect(line.id)}
-            className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${activeLineId === line.id ? 'bg-[#2680EB]/15 border border-[#2680EB]' : 'border border-transparent hover:bg-white/5'}`}
+            className={`group relative flex flex-col gap-1.5 p-2.5 rounded-lg border transition-all duration-200 cursor-pointer ${
+              activeLineId === line.id 
+                ? 'bg-[#2680EB]/10 border-[#2680EB] shadow-[0_4px_12px_rgba(0,0,0,0.1)]' 
+                : 'bg-[#252525] border-[#383838] hover:border-[#555]'
+            }`}
           >
-            <span className={`w-5 text-center font-bold text-[11px] ${activeLineId === line.id ? 'text-[#2680EB]' : 'text-[#666]'}`}>{line.id}</span>
-            <input 
-              className="flex-1 bg-[#232323] border border-[#505050] text-[#F5F5F5] h-7 px-2 rounded text-xs outline-none focus:border-[#2680EB]"
-              placeholder="Digite o texto..."
-              value={line.text}
-              onChange={(e) => onInputChange(line.id, e.target.value)}
-              onFocus={() => onSelect(line.id)}
-            />
-            {line.text && <div className="w-1.5 h-1.5 rounded-full bg-[#2DCE89]" />}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className={`text-[9px] font-black w-4 h-4 flex items-center justify-center rounded ${activeLineId === line.id ? 'bg-[#2680EB] text-white' : 'bg-[#1a1a1a] text-[#555]'}`}>
+                  {line.id}
+                </span>
+                <span className={`text-[8px] font-bold uppercase tracking-tighter ${activeLineId === line.id ? 'text-[#2680EB]' : 'text-[#666]'}`}>
+                  Camada de Texto
+                </span>
+              </div>
+              {line.text && (
+                <button 
+                  onClick={(e) => { e.stopPropagation(); onInputChange(line.id, ""); }}
+                  className="opacity-0 group-hover:opacity-100 p-1 hover:text-[#ff5f56] text-[#555] transition-all"
+                >
+                  <Trash2 size={10} />
+                </button>
+              )}
+            </div>
+
+            <div className="relative">
+              <textarea 
+                className={`w-full bg-[#1a1a1a] border border-[#444] text-[#eee] text-[11px] p-2 rounded-md outline-none focus:border-[#2680EB] transition-all resize-none h-14 custom-scrollbar ${activeLineId === line.id ? 'border-[#2680EB]/50' : ''}`}
+                placeholder="Insira o diálogo aqui..."
+                value={line.text}
+                onChange={(e) => onInputChange(line.id, e.target.value)}
+                onFocus={() => onSelect(line.id)}
+              />
+              {!line.text && (
+                <div className="absolute right-2 bottom-2 w-1.5 h-1.5 rounded-full bg-[#ffbd2e] animate-pulse" />
+              )}
+              {line.text && (
+                <div className="absolute right-2 bottom-2 w-1.5 h-1.5 rounded-full bg-[#2DCE89]" />
+              )}
+            </div>
           </div>
         ))}
       </div>
